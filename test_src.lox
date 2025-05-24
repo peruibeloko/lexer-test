@@ -1,0 +1,10 @@
+fun add(a, b) {
+  return a + b;
+}
+
+fun square(a) {
+  return add(a, a);
+}
+
+// comment
+var four = square(2.2);
