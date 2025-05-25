@@ -1,117 +1,134 @@
-import { Token } from "./Token.ts";
-import {
-  DOUBLE_SYMBOLS,
-  RESERVED_WORDS,
-  SINGLE_SYMBOLS,
-  TokenTypes,
-} from "./TokenTypes.ts";
+import { Token } from './Token.ts';
+import { DOUBLE_SYMBOLS, RESERVED_WORDS, SINGLE_SYMBOLS, TokenTypes } from './TokenTypes.ts';
 
-let source = "";
+export class Lexer {
+  source: string;
+  start: number;
+  current: number;
+  line: number;
+  tokens: Token[];
 
-let start = 0;
-let current = 0;
-let line = 1;
-const tokens: Token[] = [];
+  constructor(src: string) {
+    this.source = src;
+    this.start = 0;
+    this.current = 0;
+    this.line = 1;
+    this.tokens = [];
+  }
 
-const isDone = () => current >= source.length;
-const consume = () => source[current++];
-const lexeme = () => source.slice(start, current);
+  private isDone() {
+    return this.current >= this.source.length;
+  }
 
-const emit = (type: symbol) => {
-  if (type === TokenTypes.EOF) tokens.push(new Token(type, "", line));
-  else tokens.push(new Token(type, lexeme(), line));
-};
+  private consume() {
+    return this.source[this.current++];
+  }
 
-const peek = (n: number = 0) => {
-  if (isDone()) return "\0";
-  return source[current + n];
-};
+  private lexeme() {
+    return this.source.slice(this.start, this.current);
+  }
 
-const isNextChar = (char: string) => {
-  if (isDone()) return false;
-  if (source[current] !== char) return false;
+  private emit(type: symbol) {
+    if (type === TokenTypes.EOF) this.tokens.push(new Token(type, '', this.line));
+    else this.tokens.push(new Token(type, this.lexeme(), this.line));
+  }
 
-  current++;
-  return true;
-};
+  private peek(n: number = 0) {
+    if (this.isDone()) return '\0';
+    return this.source[this.current + n];
+  }
 
-export function tokenize(fileContents: string) {
-  source = fileContents;
+  private isNextChar(char: string) {
+    if (this.isDone()) return false;
+    if (this.source[this.current] !== char) return false;
 
-  while (!isDone()) {
-    start = current;
+    this.current++;
+    return true;
+  }
 
-    const char = consume();
+  private isEndOfLine() {
+    return this.peek() === '\n' || this.isDone();
+  }
 
-    if (char === "\n") {
-      line++;
-      continue;
-    }
+  tokenize() {
+    while (!this.isDone()) {
+      this.start = this.current;
+      const char = this.consume();
 
-    if (/\s/.test(char)) {
-      continue;
-    }
+      if (char === '\n') {
+        this.line++;
+        continue;
+      }
 
-    let type;
+      if (/\s/.test(char)) {
+        continue;
+      }
 
-    type = SINGLE_SYMBOLS.get(char);
-    if (type) {
-      emit(type);
-      continue;
-    }
+      let type;
 
-    type = DOUBLE_SYMBOLS.get(char);
-    if (type) {
-      if (isNextChar(type.secondChar)) {
-        if (type.typeDouble === TokenTypes.SLASH_SLASH) {
-          while (peek() !== "\n") consume();
+      type = SINGLE_SYMBOLS.get(char);
+      if (type) {
+        this.emit(type);
+        continue;
+      }
+
+      type = DOUBLE_SYMBOLS.get(char);
+      if (type) {
+        if (this.isNextChar(type.secondChar)) {
+          if (type.typeDouble === TokenTypes.SLASH_SLASH) {
+            while (!this.isEndOfLine()) this.consume();
+            continue;
+          }
+
+          this.emit(type.typeDouble);
           continue;
         }
 
-        emit(type.typeDouble);
+        this.emit(type.typeSingle);
         continue;
       }
 
-      emit(type.typeSingle);
-      continue;
-    }
+      if (char === '"') {
+        while (this.peek() !== '"') {
+          this.consume();
+        }
 
-    if (char === '"') {
-      while (peek() !== '"') consume();
-      emit(TokenTypes.STRING);
-      continue;
-    }
-
-    if (/[a-z_]/i.test(char)) {
-      while (/[a-z0-9_]/i.test(peek())) consume();
-
-      const id = lexeme();
-      const keywordType = RESERVED_WORDS.get(id);
-
-      if (keywordType) {
-        emit(keywordType);
+        this.consume();
+        this.emit(TokenTypes.STRING);
         continue;
       }
 
-      emit(TokenTypes.IDENTIFIER);
-      continue;
-    }
+      if (/[a-z_]/i.test(char)) {
+        while (/[a-z0-9_]/i.test(this.peek())) this.consume();
 
-    if (/[1-9]/.test(char)) {
-      while (/\d/.test(peek())) consume();
+        const id = this.lexeme();
+        const keywordType = RESERVED_WORDS.get(id);
 
-      if (peek() === "." && /\d/.test(peek(1))) {
-        consume();
-        while (/\d/.test(peek())) consume();
+        if (keywordType) {
+          this.emit(keywordType);
+          continue;
+        }
+
+        this.emit(TokenTypes.IDENTIFIER);
+        continue;
       }
 
-      emit(TokenTypes.NUMBER);
-      continue;
+      if (/[1-9]/.test(char)) {
+        while (/\d/.test(this.peek())) this.consume();
+
+        if (this.peek() === '.' && /\d/.test(this.peek(1))) {
+          this.consume();
+          while (/\d/.test(this.peek())) this.consume();
+        }
+
+        this.emit(TokenTypes.NUMBER);
+        continue;
+      }
+
+      this.emit(TokenTypes.UNKNOWN);
     }
 
-    emit(TokenTypes.UNKNOWN);
+    this.emit(TokenTypes.EOF);
+    return this.tokens;
   }
-
-  emit(TokenTypes.EOF);
-  return tokens;
 }
