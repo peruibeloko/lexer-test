@@ -1,8 +1,14 @@
 import { Lexer } from './lexer.ts';
+import { RegexLexer } from './regex_lexer.ts';
 
 const src = Deno.readTextFileSync('./test/scanning/strings.lox');
-const tokens = new Lexer(src).tokenize();
+const scannedTokens = new Lexer(src).tokenize();
+const matchedTokens = new RegexLexer(src).tokenize();
 
-for (const token of tokens) {
-  console.log(`[${token.type.description}] ${token.lexeme}`);
+for (const token of scannedTokens) {
+  console.log(token.toString());
+}
+
+for (const token of matchedTokens) {
+  console.log(token.toString());
 }

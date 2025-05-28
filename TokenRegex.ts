@@ -1,0 +1,27 @@
+import { TokenTypes } from "./TokenTypes.ts";
+
+export const TokenRegexes = new Map([
+  [TokenTypes.LEFT_PAREN, /^\(/],
+  [TokenTypes.RIGHT_PAREN, /^\)/],
+  [TokenTypes.LEFT_BRACE, /^{/],
+  [TokenTypes.RIGHT_BRACE, /^}/],
+  [TokenTypes.COMMA, /^,/],
+  [TokenTypes.DOT, /^\./],
+  [TokenTypes.MINUS, /^-/],
+  [TokenTypes.PLUS, /^\+/],
+  [TokenTypes.SEMICOLON, /^;/],
+  [TokenTypes.STAR, /^\*/],
+  [TokenTypes.SLASH, /^\//],
+  [TokenTypes.SLASH_SLASH, /^\/\//],
+  [TokenTypes.BANG, /^!/],
+  [TokenTypes.BANG_EQUAL, /^!=/],
+  [TokenTypes.EQUAL, /^=/],
+  [TokenTypes.EQUAL_EQUAL, /^==/],
+  [TokenTypes.GREATER, /^>/],
+  [TokenTypes.GREATER_EQUAL, /^>=/],
+  [TokenTypes.LESS, /^</],
+  [TokenTypes.LESS_EQUAL, /^<=/],
+  [TokenTypes.STRING, /^"\w*"/],
+  [TokenTypes.IDENTIFIER, /^[a-zA-Z_]\w*/],
+  [TokenTypes.NUMBER, /^[1-9]\d*/],
+]);

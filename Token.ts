@@ -8,4 +8,8 @@ export class Token {
     this.lexeme = lexeme;
     this.line = line;
   }
+
+  toString() {
+    return `${this.line}:[${this.type.description}] ${this.lexeme}`;
+  }
 }
