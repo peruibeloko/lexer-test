@@ -36,7 +36,7 @@ export class RegexLexer {
 
   private consumeWhitespace() {
     this.consumeNewlines();
-    const match = this.window.match(/^[ \t]/)?.[0];
+    const match = this.window.match(/^[ \t]+/)?.[0];
     if (match) {
       this.advance(match);
     }

@@ -23,5 +23,5 @@ export const TokenRegexes = new Map([
   [TokenTypes.LESS_EQUAL, /^<=/],
   [TokenTypes.STRING, /^"\w*"/],
   [TokenTypes.IDENTIFIER, /^[a-zA-Z_]\w*/],
-  [TokenTypes.NUMBER, /^[1-9]\d*/],
+  [TokenTypes.NUMBER, /^[1-9]\d*(\.\d+)*/],
 ]);
