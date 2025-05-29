@@ -1,5 +1,14 @@
-import { UnexpectedCharacterError, UnterminatedStringError } from './LexerErrors.ts';
-import { getRegex, RESERVED_WORDS, Token, TokenRegexes, TokenTypes } from './Token.ts';
+import {
+  UnexpectedCharacterError,
+  UnterminatedStringError,
+} from './LexerErrors.ts';
+import {
+  getRegex,
+  RESERVED_WORDS,
+  Token,
+  TokenRegexes,
+  TokenTypes,
+} from './Token.ts';
 
 export class Lexer {
   source: string;
@@ -62,7 +71,8 @@ export class Lexer {
 
     let size = 0;
 
-    while (this.source.charAt(size) !== '"' && size < this.source.length) size++;
+    while (this.source.charAt(size) !== '"' && size < this.source.length)
+      size++;
 
     if (size === this.source.length) {
       this.errors.push(new UnterminatedStringError(this.line));
@@ -70,8 +80,15 @@ export class Lexer {
       return;
     }
 
-    this.advance(size);
+    if (size === 0) {
+      this.consume('"'); // closing quote
+      this.emitToken(TokenTypes.STRING, `""`);
+      return;
+    }
+
     this.emitToken(TokenTypes.STRING, `"${this.source.slice(0, size)}"`);
+    this.advance(size);
+    this.consume('"');
   }
 
   private matchToken() {

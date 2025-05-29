@@ -14,9 +14,9 @@ function getExpectedValues(file: string) {
   const CAPTURE_EXPECTED = /^\/\/ expect: (?<expected>.+)$/gm;
   return file
     .matchAll(CAPTURE_EXPECTED)
-    .filter(m => !!m.groups)
-    .map(m => m.groups!['expected'])
-    .map(s => s.split(' ').slice(0, 2))
+    .filter((m) => !!m.groups)
+    .map((m) => m.groups!['expected'])
+    .map((s) => s.split(' ').slice(0, 2))
     .toArray();
 }
 
@@ -35,7 +35,7 @@ const testLogic = (t: Deno.TestContext) => {
 
   assertEquals(
     expected,
-    actual.map(t => [t.type.description, t.lexeme])
+    actual.map((t) => [t.type.description, t.lexeme])
   );
 };
 

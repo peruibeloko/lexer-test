@@ -1,6 +1,6 @@
 import { Lexer } from './lexer.ts';
 
-const src = Deno.readTextFileSync('./test/string/unterminated.lox');
+const src = Deno.readTextFileSync('./test/scanning/strings.lox');
 const [tokens, errors] = new Lexer(src).tokenize();
 
 for (const token of tokens) {

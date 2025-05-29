@@ -60,18 +60,18 @@ const MatchableTokens = {
   THIS: Symbol('THIS'),
   TRUE: Symbol('TRUE'),
   VAR: Symbol('VAR'),
-  WHILE: Symbol('WHILE')
+  WHILE: Symbol('WHILE'),
 };
 
 const SpecialTokens = {
   STRING: Symbol('STRING'),
   EOF: Symbol('EOF'),
-  UNKNOWN: Symbol('UNKNOWN')
+  UNKNOWN: Symbol('UNKNOWN'),
 };
 
 export const TokenTypes = {
   ...MatchableTokens,
-  ...SpecialTokens
+  ...SpecialTokens,
 };
 
 export const TokenRegexes = new Map([
@@ -97,7 +97,7 @@ export const TokenRegexes = new Map([
   [TokenTypes.LESS_EQUAL, /^<=/],
   [TokenTypes.DOUBLE_QUOTE, /^"/],
   [TokenTypes.IDENTIFIER, /^[a-zA-Z_]\w*/],
-  [TokenTypes.NUMBER, /^[1-9]\d*(\.\d+)*/]
+  [TokenTypes.NUMBER, /^[1-9]\d*(\.\d+)*/],
 ]);
 
 export const RESERVED_WORDS = new Map([
@@ -116,7 +116,7 @@ export const RESERVED_WORDS = new Map([
   ['this', TokenTypes.THIS],
   ['true', TokenTypes.TRUE],
   ['var', TokenTypes.VAR],
-  ['while', TokenTypes.WHILE]
+  ['while', TokenTypes.WHILE],
 ]);
 
 export const getRegex = (type: symbol) => {
