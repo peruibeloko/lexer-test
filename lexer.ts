@@ -1,32 +1,43 @@
 import { RESERVED_WORDS, Token, TokenRegexes, TokenTypes } from './Token.ts';
+import { UnexpectedCharacterError } from './UnexpectedCharacterError.ts';
 
 export class Lexer {
   source: string;
   line: number;
   tokens: Token[];
+  errors: Error[];
 
   constructor(src: string) {
     this.source = src;
     this.line = 1;
     this.tokens = [];
+    this.errors = [];
   }
 
   private isDone() {
     return this.source === '';
   }
 
-  private emit(type: symbol, lexeme: string) {
+  private emitToken(type: symbol, lexeme: string) {
     this.tokens.push(new Token(type, lexeme, this.line));
   }
 
-  private advance(lexeme: string) {
-    this.source = this.source.slice(lexeme.length);
+  private emitError(line: number) {
+    this.errors.push(new UnexpectedCharacterError(line));
+  }
+
+  private advance(n: number) {
+    this.source = this.source.slice(n);
+  }
+
+  private consume(lexeme: string) {
+    this.advance(lexeme.length);
   }
 
   private consumeNewlines() {
     while (this.source.match(/^\n/)) {
       this.line++;
-      this.source = this.source.slice(1);
+      this.advance(1);
     }
   }
 
@@ -34,13 +45,13 @@ export class Lexer {
     this.consumeNewlines();
     const match = this.source.match(/^[ \t]+/)?.[0];
     if (match) {
-      this.advance(match);
+      this.consume(match);
     }
   }
 
-  consumeComment() {
+  private consumeComment() {
     const comment = this.source.match(/^.*/)?.[0];
-    if (comment) this.advance(comment);
+    if (comment) this.consume(comment);
     this.consumeNewlines();
   }
 
@@ -69,6 +80,11 @@ export class Lexer {
   tokenize() {
     while (!this.isDone()) {
       this.consumeWhitespace();
+
+      if (this.source === '') {
+        break;
+      }
+
       const { type, lexeme } = this.matchToken();
 
       if (type === TokenTypes.SLASH_SLASH) {
@@ -76,11 +92,17 @@ export class Lexer {
         continue;
       }
 
-      this.emit(type, lexeme);
-      this.advance(lexeme);
+      if (type === TokenTypes.UNKNOWN) {
+        this.emitError(this.line);
+        this.advance(1);
+        continue;
+      }
+
+      this.emitToken(type, lexeme);
+      this.consume(lexeme);
     }
 
-    this.emit(TokenTypes.EOF, '');
-    return this.tokens;
+    this.emitToken(TokenTypes.EOF, '');
+    return [this.tokens, this.errors] as [Token[], Error[]];
   }
 }
