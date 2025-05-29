@@ -1,134 +1,86 @@
-import { Token } from './Token.ts';
-import { DOUBLE_SYMBOLS, RESERVED_WORDS, SINGLE_SYMBOLS, TokenTypes } from './TokenTypes.ts';
+import { RESERVED_WORDS, Token, TokenRegexes, TokenTypes } from './Token.ts';
 
 export class Lexer {
   source: string;
-  start: number;
-  current: number;
   line: number;
   tokens: Token[];
 
   constructor(src: string) {
     this.source = src;
-    this.start = 0;
-    this.current = 0;
     this.line = 1;
     this.tokens = [];
   }
 
   private isDone() {
-    return this.current >= this.source.length;
+    return this.source === '';
   }
 
-  private consume() {
-    return this.source[this.current++];
+  private emit(type: symbol, lexeme: string) {
+    this.tokens.push(new Token(type, lexeme, this.line));
   }
 
-  private lexeme() {
-    return this.source.slice(this.start, this.current);
+  private advance(lexeme: string) {
+    this.source = this.source.slice(lexeme.length);
   }
 
-  private emit(type: symbol) {
-    if (type === TokenTypes.EOF) this.tokens.push(new Token(type, '', this.line));
-    else this.tokens.push(new Token(type, this.lexeme(), this.line));
+  private consumeNewlines() {
+    while (this.source.match(/^\n/)) {
+      this.line++;
+      this.source = this.source.slice(1);
+    }
   }
 
-  private peek(n: number = 0) {
-    if (this.isDone()) return '\0';
-    return this.source[this.current + n];
+  private consumeWhitespace() {
+    this.consumeNewlines();
+    const match = this.source.match(/^[ \t]+/)?.[0];
+    if (match) {
+      this.advance(match);
+    }
   }
 
-  private isNextChar(char: string) {
-    if (this.isDone()) return false;
-    if (this.source[this.current] !== char) return false;
-
-    this.current++;
-    return true;
+  consumeComment() {
+    const comment = this.source.match(/^.*/)?.[0];
+    if (comment) this.advance(comment);
+    this.consumeNewlines();
   }
 
-  private isEndOfLine() {
-    return this.peek() === '\n' || this.isDone();
+  private matchToken() {
+    const token = { type: TokenTypes.UNKNOWN, lexeme: '' };
+
+    for (const [maybe_type, regex] of TokenRegexes.entries()) {
+      const maybe_lexeme = this.source.match(regex)?.[0];
+
+      if (maybe_lexeme === undefined) continue;
+
+      // Maximum munch
+      if (maybe_lexeme.length > token.lexeme.length) {
+        token.type = maybe_type;
+        token.lexeme = maybe_lexeme;
+      }
+    }
+
+    if (token.type === TokenTypes.IDENTIFIER) {
+      token.type = RESERVED_WORDS.get(token.lexeme) ?? token.type;
+    }
+
+    return token;
   }
 
   tokenize() {
     while (!this.isDone()) {
-      this.start = this.current;
-      const char = this.consume();
+      this.consumeWhitespace();
+      const { type, lexeme } = this.matchToken();
 
-      if (char === '\n') {
-        this.line++;
+      if (type === TokenTypes.SLASH_SLASH) {
+        this.consumeComment();
         continue;
       }
 
-      if (/\s/.test(char)) {
-        continue;
-      }
-
-      let type;
-
-      type = SINGLE_SYMBOLS.get(char);
-      if (type) {
-        this.emit(type);
-        continue;
-      }
-
-      type = DOUBLE_SYMBOLS.get(char);
-      if (type) {
-        if (this.isNextChar(type.secondChar)) {
-          if (type.typeDouble === TokenTypes.SLASH_SLASH) {
-            while (!this.isEndOfLine()) this.consume();
-            continue;
-          }
-
-          this.emit(type.typeDouble);
-          continue;
-        }
-
-        this.emit(type.typeSingle);
-        continue;
-      }
-
-      if (char === '"') {
-        while (this.peek() !== '"') {
-          this.consume();
-        }
-
-        this.consume();
-        this.emit(TokenTypes.STRING);
-        continue;
-      }
-
-      if (/[a-z_]/i.test(char)) {
-        while (/[a-z0-9_]/i.test(this.peek())) this.consume();
-
-        const id = this.lexeme();
-        const keywordType = RESERVED_WORDS.get(id);
-
-        if (keywordType) {
-          this.emit(keywordType);
-          continue;
-        }
-
-        this.emit(TokenTypes.IDENTIFIER);
-        continue;
-      }
-
-      if (/[1-9]/.test(char)) {
-        while (/\d/.test(this.peek())) this.consume();
-
-        if (this.peek() === '.' && /\d/.test(this.peek(1))) {
-          this.consume();
-          while (/\d/.test(this.peek())) this.consume();
-        }
-
-        this.emit(TokenTypes.NUMBER);
-        continue;
-      }
-
-      this.emit(TokenTypes.UNKNOWN);
+      this.emit(type, lexeme);
+      this.advance(lexeme);
     }
 
-    this.emit(TokenTypes.EOF);
+    this.emit(TokenTypes.EOF, '');
     return this.tokens;
   }
 }

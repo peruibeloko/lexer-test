@@ -1,7 +1,6 @@
 import { Lexer } from './lexer.ts';
 import { walkSync } from '@std/fs';
 import { assertEquals } from '@std/assert';
-import { RegexLexer } from "./regex_lexer.ts";
 
 export function readAll(folder: string) {
   const out = [];
@@ -32,7 +31,7 @@ for (const [name, path] of files) {
 
 const testLogic = (t: Deno.TestContext) => {
   const [contents, expected] = testData.get(t.name);
-  const actual = new RegexLexer(contents).tokenize().map(t => [t.type.description, t.lexeme]);
+  const actual = new Lexer(contents).tokenize().map(t => [t.type.description, t.lexeme]);
   assertEquals(expected, actual);
 };
 
