@@ -11,7 +11,7 @@ export function readAll(folder: string) {
 }
 
 function getExpectedValues(file: string) {
-  const CAPTURE_EXPECTED = /(?<=\/\/ expect: )(?<expected>.+)$/gm;
+  const CAPTURE_EXPECTED = /^\/\/ expect: (?<expected>.+)$/gm;
   return file
     .matchAll(CAPTURE_EXPECTED)
     .filter(m => !!m.groups)
@@ -31,8 +31,12 @@ for (const [name, path] of files) {
 
 const testLogic = (t: Deno.TestContext) => {
   const [contents, expected] = testData.get(t.name);
-  const actual = new Lexer(contents).tokenize().map(t => [t.type.description, t.lexeme]);
-  assertEquals(expected, actual);
+  const [actual, errors] = new Lexer(contents).tokenize();
+
+  assertEquals(
+    expected,
+    actual.map(t => [t.type.description, t.lexeme])
+  );
 };
 
 Deno.test('identifiers', testLogic);

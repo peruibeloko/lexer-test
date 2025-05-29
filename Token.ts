@@ -14,7 +14,7 @@ export class Token {
   }
 }
 
-export const TokenTypes = {
+const MatchableTokens = {
   // Single-character tokens.
   LEFT_PAREN: Symbol('LEFT_PAREN'),
   RIGHT_PAREN: Symbol('RIGHT_PAREN'),
@@ -26,6 +26,7 @@ export const TokenTypes = {
   PLUS: Symbol('PLUS'),
   SEMICOLON: Symbol('SEMICOLON'),
   STAR: Symbol('STAR'),
+  DOUBLE_QUOTE: Symbol('DOUBLE_QUOTE'),
 
   // One or two character tokens.
   SLASH: Symbol('SLASH'),
@@ -41,7 +42,6 @@ export const TokenTypes = {
 
   // Literals.
   IDENTIFIER: Symbol('IDENTIFIER'),
-  STRING: Symbol('STRING'),
   NUMBER: Symbol('NUMBER'),
 
   // Keywords.
@@ -60,10 +60,18 @@ export const TokenTypes = {
   THIS: Symbol('THIS'),
   TRUE: Symbol('TRUE'),
   VAR: Symbol('VAR'),
-  WHILE: Symbol('WHILE'),
+  WHILE: Symbol('WHILE')
+};
 
+const SpecialTokens = {
+  STRING: Symbol('STRING'),
   EOF: Symbol('EOF'),
   UNKNOWN: Symbol('UNKNOWN')
+};
+
+export const TokenTypes = {
+  ...MatchableTokens,
+  ...SpecialTokens
 };
 
 export const TokenRegexes = new Map([
@@ -87,9 +95,9 @@ export const TokenRegexes = new Map([
   [TokenTypes.GREATER_EQUAL, /^>=/],
   [TokenTypes.LESS, /^</],
   [TokenTypes.LESS_EQUAL, /^<=/],
-  [TokenTypes.STRING, /^"\w*"/],
+  [TokenTypes.DOUBLE_QUOTE, /^"/],
   [TokenTypes.IDENTIFIER, /^[a-zA-Z_]\w*/],
-  [TokenTypes.NUMBER, /^[1-9]\d*(\.\d+)*/],
+  [TokenTypes.NUMBER, /^[1-9]\d*(\.\d+)*/]
 ]);
 
 export const RESERVED_WORDS = new Map([
@@ -111,3 +119,6 @@ export const RESERVED_WORDS = new Map([
   ['while', TokenTypes.WHILE]
 ]);
 
+export const getRegex = (type: symbol) => {
+  return TokenRegexes.get(type)!;
+};

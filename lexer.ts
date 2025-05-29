@@ -1,5 +1,5 @@
-import { RESERVED_WORDS, Token, TokenRegexes, TokenTypes } from './Token.ts';
-import { UnexpectedCharacterError } from './UnexpectedCharacterError.ts';
+import { UnexpectedCharacterError, UnterminatedStringError } from './LexerErrors.ts';
+import { getRegex, RESERVED_WORDS, Token, TokenRegexes, TokenTypes } from './Token.ts';
 
 export class Lexer {
   source: string;
@@ -22,8 +22,10 @@ export class Lexer {
     this.tokens.push(new Token(type, lexeme, this.line));
   }
 
-  private emitError(line: number) {
-    this.errors.push(new UnexpectedCharacterError(line));
+  private match(type: symbol) {
+    const match = this.source.match(getRegex(type))?.[0];
+    if (match) return match;
+    return null;
   }
 
   private advance(n: number) {
@@ -55,6 +57,23 @@ export class Lexer {
     this.consumeNewlines();
   }
 
+  private consumeString() {
+    this.consume('"'); // opening quote
+
+    let size = 0;
+
+    while (this.source.charAt(size) !== '"' && size < this.source.length) size++;
+
+    if (size === this.source.length) {
+      this.errors.push(new UnterminatedStringError(this.line));
+      this.advance(size);
+      return;
+    }
+
+    this.advance(size);
+    this.emitToken(TokenTypes.STRING, `"${this.source.slice(0, size)}"`);
+  }
+
   private matchToken() {
     const token = { type: TokenTypes.UNKNOWN, lexeme: '' };
 
@@ -81,25 +100,28 @@ export class Lexer {
     while (!this.isDone()) {
       this.consumeWhitespace();
 
-      if (this.source === '') {
-        break;
-      }
+      if (this.source === '') break;
 
       const { type, lexeme } = this.matchToken();
 
-      if (type === TokenTypes.SLASH_SLASH) {
-        this.consumeComment();
-        continue;
-      }
+      switch (type) {
+        case TokenTypes.SLASH_SLASH:
+          this.consumeComment();
+          continue;
 
-      if (type === TokenTypes.UNKNOWN) {
-        this.emitError(this.line);
-        this.advance(1);
-        continue;
-      }
+        case TokenTypes.DOUBLE_QUOTE:
+          this.consumeString();
+          continue;
 
-      this.emitToken(type, lexeme);
-      this.consume(lexeme);
+        case TokenTypes.UNKNOWN:
+          this.errors.push(new UnexpectedCharacterError(this.line));
+          this.advance(1);
+          continue;
+
+        default:
+          this.emitToken(type, lexeme);
+          this.consume(lexeme);
+      }
     }
 
     this.emitToken(TokenTypes.EOF, '');
