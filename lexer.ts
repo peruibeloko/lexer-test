@@ -1,7 +1,7 @@
 import {
   UnexpectedCharacterError,
   UnterminatedStringError,
-} from './LexerErrors.ts';
+} from './CompilerError.ts';
 import {
   getRegex,
   RESERVED_WORDS,
